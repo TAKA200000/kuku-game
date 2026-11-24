@@ -9,11 +9,12 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;800&display=swap">
 <style>
-/* layout: 1画面アプリ。ホーム=くくバンドのステージ+段の格子 / プレイ=キャラ+問題+4択。単一テーマ(空色) */
+/* layout: 1画面アプリ。ホーム=くくバンドのステージ+段の格子 / プレイ=キャラ+問題+4択。
+   ふだんは空色、全段クリア後に「ホラーモード」(body.horror)で闇色に切り替わる */
 :root{
   --sky:#bfe6ff; --sky2:#e8f6ff; --ink:#23324a; --paper:#fffdf6;
   --good:#2fb36d; --bad:#ef5b5b; --gold:#ffbf2e; --shadow:#23324a33;
-  --stage:#2a2350; --stage2:#463a86;
+  --stage:#2a2350; --stage2:#463a86; --yomi:#c0567a; --tile:#ffffff;
   --font:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN","Hiragino Sans",system-ui,sans-serif;
   --beat:.6s;
   color-scheme:light;
@@ -24,6 +25,7 @@ body{margin:0;background:linear-gradient(180deg,var(--sky),var(--sky2));color:va
   padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
   user-select:none;-webkit-user-select:none;overflow-x:hidden}
+#app{position:relative;z-index:1}
 button{font-family:inherit;font-weight:800;color:inherit;border:0;cursor:pointer;touch-action:manipulation;background:none;padding:0}
 button:focus-visible{outline:4px solid var(--ink);outline-offset:3px}
 .screen{max-width:860px;margin:0 auto;padding-block:16px 32px;display:flex;flex-direction:column;gap:16px;min-height:100%}
@@ -91,14 +93,18 @@ h1 small{display:block;font-size:.4em;font-weight:500;letter-spacing:.1em;opacit
 .big{background:var(--paper);border-radius:20px;padding:16px;font-size:22px;box-shadow:0 6px 0 var(--shadow)}
 .big:active{transform:translateY(4px);box-shadow:0 2px 0 var(--shadow)}
 .big.dark{background:var(--ink);color:var(--paper)}
+.big small{display:block;font-size:14px;font-weight:500;opacity:.8;margin-top:4px}
+.hbtn{background:#14070b;color:#ff4a4a;letter-spacing:.06em;text-shadow:0 0 10px #ff000099;box-shadow:0 6px 0 #000,0 0 24px #ff000055;animation:glitch 2.4s infinite}
+@keyframes glitch{0%,88%,100%{transform:none;filter:none}90%{transform:translateX(-3px) skewX(6deg);filter:hue-rotate(40deg)}92%{transform:translateX(3px)}94%{transform:none;opacity:.6}96%{opacity:1}}
 .top{display:flex;align-items:center;gap:10px}
 .back{background:var(--paper);border-radius:14px;padding:10px 16px;font-size:18px;box-shadow:0 4px 0 var(--shadow)}
 .top .ttl{flex:1;text-align:center;font-size:22px}
 .spacer{width:90px}
 .card{background:var(--paper);border-radius:28px;padding:24px 16px;box-shadow:0 8px 0 var(--shadow);text-align:center;display:flex;flex-direction:column;gap:10px;align-items:center;min-width:0}
 .eq{font-size:clamp(48px,12vw,100px);line-height:1.05;font-variant-numeric:tabular-nums;white-space:nowrap}
-.eq .q{display:inline-block;min-width:1.4em;border-bottom:6px dashed #23324a55;color:#23324a55}
-.yomi{font-size:clamp(20px,4.5vw,32px);font-weight:500;letter-spacing:.06em;color:#c0567a;min-height:1.3em}
+.eq .q{display:inline-block;min-width:1.2em;border-bottom:6px dashed currentColor;opacity:.4}
+.eq .q.shown{opacity:1;border-color:transparent}
+.yomi{font-size:clamp(20px,4.5vw,32px);font-weight:500;letter-spacing:.06em;color:var(--yomi);min-height:1.3em}
 .choices{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .ch{background:var(--paper);border-radius:22px;font-size:clamp(40px,10vw,64px);padding:16px 0;box-shadow:0 6px 0 var(--shadow);font-variant-numeric:tabular-nums}
 .ch:active{transform:translateY(4px);box-shadow:0 2px 0 var(--shadow)}
@@ -108,13 +114,12 @@ h1 small{display:block;font-size:.4em;font-weight:500;letter-spacing:.1em;opacit
 .hud{display:flex;justify-content:space-between;font-size:20px;font-variant-numeric:tabular-nums}
 .combo{color:#e2741d}
 .qrow{display:flex;align-items:center;gap:10px}
-.qrow .card{flex:1}
+.qrow .card{flex:1;padding-inline:10px}
+.qrow .eq{font-size:clamp(38px,8.5vw,86px)}
 .buddy{position:relative;display:flex;flex-direction:column;align-items:center}
 .buddy .chr{--s:clamp(84px,22vw,180px)}
-.qrow .eq{font-size:clamp(38px,8.5vw,86px)}
-.qrow .card{padding-inline:10px}
-.bubble{position:absolute;bottom:100%;left:50%;transform:translateX(-30%);background:#fff;border-radius:16px;padding:6px 12px;font-size:18px;white-space:nowrap;box-shadow:0 3px 0 var(--shadow);z-index:2}
-.bubble::after{content:"";position:absolute;left:24%;bottom:-8px;border:8px solid transparent;border-top-color:#fff;border-bottom:0}
+.bubble{position:absolute;bottom:100%;left:50%;transform:translateX(-30%);background:var(--tile);border-radius:16px;padding:6px 12px;font-size:18px;white-space:nowrap;box-shadow:0 3px 0 var(--shadow);z-index:2}
+.bubble::after{content:"";position:absolute;left:24%;bottom:-8px;border:8px solid transparent;border-top-color:var(--tile);border-bottom:0}
 .bubble:empty{display:none}
 .pop{animation:pop .35s}
 @keyframes pop{0%{transform:scale(.8)}60%{transform:scale(1.12)}100%{transform:scale(1)}}
@@ -123,21 +128,68 @@ h1 small{display:block;font-size:.4em;font-weight:500;letter-spacing:.1em;opacit
 .shake{animation:shake .35s}
 @keyframes shake{25%{transform:translateX(-10px)}75%{transform:translateX(10px)}}
 .list{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;width:100%}
-.list div{background:#fff;border-radius:12px;padding:8px;font-size:20px}
-.list div.miss{background:#ffe1e1}
+.list div{background:var(--tile);border-radius:12px;padding:8px;font-size:20px}
+.list div.miss{background:#ffe1e1;color:#5a1a1a}
 .toggle{background:#ffffffaa;border-radius:14px;padding:10px 14px;font-size:18px}
 .pick{display:grid;grid-template-columns:repeat(9,1fr);gap:6px}
 .pick button{background:var(--paper);border-radius:12px;padding:10px 0;font-size:20px;box-shadow:0 3px 0 var(--shadow)}
-.pick button.cur{background:var(--c);transform:translateY(2px)}
+.pick button.cur{background:var(--c);color:#23324a;transform:translateY(2px)}
 .note{font-weight:500;font-size:15px;text-align:center;opacity:.8;margin:0}
-.join{background:radial-gradient(circle at 50% 40%,#fff6c9,#ffe07a 60%,#ffbf2e);border-radius:28px;padding:18px;display:flex;flex-direction:column;align-items:center;gap:6px;box-shadow:0 8px 0 #c98a12}
+.join{background:radial-gradient(circle at 50% 40%,#fff6c9,#ffe07a 60%,#ffbf2e);color:#23324a;border-radius:28px;padding:18px;display:flex;flex-direction:column;align-items:center;gap:6px;box-shadow:0 8px 0 #c98a12}
 .join .chr{--s:170px}
 .join h2{margin:0;font-size:clamp(24px,5vw,34px);text-align:center;text-wrap:balance}
-.join p{margin:0;font-weight:500}
+.join p{margin:0;font-weight:500;text-align:center}
+.awake{background:radial-gradient(circle at 50% 30%,#3a0610,#0a0204 70%);color:#ff5050;border-radius:28px;padding:22px 16px;text-align:center;box-shadow:0 8px 0 #000,0 0 40px #ff000044;animation:glitch 2s infinite}
+.awake h2{margin:0 0 6px;font-size:clamp(24px,5vw,34px);text-shadow:0 0 12px #f00}
+.awake p{margin:0;color:#e9d6d6;font-weight:500}
 .menuhead{display:flex;align-items:center;gap:16px;justify-content:center;flex-wrap:wrap}
 .menuhead .chr{--s:130px}
+.hzone{display:flex;flex-direction:column;gap:10px}
+.hzone h2{margin:0;font-size:22px;color:#ff4a4a;text-shadow:0 0 10px #f008;letter-spacing:.1em}
+.hzone .big{background:linear-gradient(180deg,#3a0a14,#1a050a);color:#ffdede;box-shadow:0 6px 0 #000,0 0 18px #ff000033;text-align:left}
+
+/* ---- ホラーモード ---- */
+body.horror{
+  --sky:#07040a; --sky2:#14060c; --ink:#eadada; --paper:#1d1218; --tile:#2a1820;
+  --good:#7a1fa8; --bad:#c2121f; --gold:#d43a3a; --shadow:#000000cc;
+  --stage:#0a0306; --stage2:#2e0710; --yomi:#ff5a5a;
+  color-scheme:dark;
+  background:radial-gradient(ellipse at 50% -10%,#3a0710 0%,transparent 55%),linear-gradient(180deg,var(--sky),var(--sky2));
+  background-attachment:fixed}
+body.horror::before{content:"";position:fixed;inset:-20%;pointer-events:none;z-index:0;
+  background:radial-gradient(circle at 20% 30%,#ff000014,transparent 30%),radial-gradient(circle at 80% 70%,#6a00ff12,transparent 35%),radial-gradient(circle at 50% 90%,#ffffff0a,transparent 40%);
+  animation:fog 14s ease-in-out infinite alternate}
+body.horror::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:2;background:radial-gradient(ellipse at center,transparent 55%,#000000b0 100%)}
+@keyframes fog{0%{transform:translate(0,0) scale(1)}100%{transform:translate(6%,-4%) scale(1.15)}}
+body.horror h1{color:#e8d0d0;text-shadow:0 0 14px #ff0000aa,2px 0 #ff000066,-2px 0 #00ffff22;animation:flicker 4s infinite}
+body.horror h1 small{color:#ff5a5a;opacity:1}
+@keyframes flicker{0%,19%,22%,62%,64%,100%{opacity:1}20%,63%{opacity:.35}21%{opacity:.9}}
+body.horror .dan{background:linear-gradient(180deg,#26141c,#130a0f);color:#e8d6d6;box-shadow:0 6px 0 #000,inset 0 0 0 2px #3a1a24}
+body.horror .stars{color:#ffffff1a}
+body.horror .stars i.on{color:#ff3b3b;text-shadow:0 0 8px #f00}
+body.horror .stage{box-shadow:0 8px 0 #000,0 0 30px #ff000022}
+body.horror .stage .playbtn{color:#fff;box-shadow:0 4px 0 #5a0a0a}
+body.horror .stage .playbtn.on{background:#5a1a8a;box-shadow:0 4px 0 #2a0a4a}
+body.horror .toggle{background:#ffffff14}
+body.horror .bar{background:#ffffff14}
+body.horror .combo{color:#ff6a3a}
+body.horror .card{box-shadow:0 8px 0 #000,inset 0 0 40px #00000088}
+body.horror .big.dark{background:#5a0a14;color:#ffe}
+body.horror .bubble{color:#ff9a9a}
+body.horror .chr .bg{animation:creep 3.4s ease-in-out infinite}
+body.horror .chr.dance .bg{animation:hdance var(--beat) steps(4,jump-none) infinite}
+body.horror .chr .glow{animation:glow 1.6s ease-in-out infinite}
+body.horror .chr .flick{animation:flicker 2.2s infinite}
+@keyframes creep{0%,100%{transform:rotate(-2deg) translateY(0)}45%{transform:rotate(2deg) translateY(-2px)}88%{transform:rotate(2deg)}90%{transform:rotate(-7deg) translateX(-2px)}92%{transform:rotate(5deg) translateX(2px)}94%{transform:rotate(0)}}
+@keyframes hdance{0%{transform:translateY(0) scale(1.1,.86) rotate(-6deg)}33%{transform:translateY(-10px) scale(.92,1.1) rotate(8deg)}66%{transform:translateY(0) skewX(-8deg) scale(1.05,.95)}100%{transform:translateY(-3px) rotate(-10deg)}}
+@keyframes glow{0%,100%{opacity:.25}50%{opacity:.6}}
+.scare{position:fixed;inset:0;z-index:50;display:grid;place-items:center;background:radial-gradient(circle,#4a0010,#000 70%);animation:scareIn .7s forwards;pointer-events:none}
+.scare .chr{--s:min(90vw,80vh);animation:jolt .06s infinite}
+@keyframes scareIn{0%{opacity:0;transform:scale(.3)}12%{opacity:1;transform:scale(1.15)}80%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.4)}}
+@keyframes jolt{0%{transform:translate(-6px,3px) rotate(-2deg)}50%{transform:translate(6px,-3px) rotate(2deg)}100%{transform:translate(-3px,-2px)}}
+
 @media (max-width:420px){.grid{gap:8px}.pick{grid-template-columns:repeat(5,1fr)}.spacer{width:0}}
-@media (prefers-reduced-motion:reduce){.pop,.shake,.chr .bg,.chr .eyes,.chr .ant,.chr .al,.chr .ar{animation:none!important}.bar>div{transition:none}}
+@media (prefers-reduced-motion:reduce){.pop,.shake,.chr .bg,.chr .eyes,.chr .ant,.chr .al,.chr .ar,.hbtn,.awake,body.horror h1,body.horror::before{animation:none!important}.bar>div{transition:none}}
 </style>
 </head>
 <body>
@@ -156,9 +208,13 @@ const YOMI=[
 ["はちいちがはち","はちにじゅうろく","はちさんにじゅうし","はちしさんじゅうに","はちごしじゅう","はちろくしじゅうはち","はちしちごじゅうろく","はっぱろくじゅうし","はっくしちじゅうに"],
 ["くいちがく","くにじゅうはち","くさんにじゅうしち","くしさんじゅうろく","くごしじゅうご","くろくごじゅうし","くしちろくじゅうさん","くはしちじゅうに","くくはちじゅういち"]];
 const KEY="kuku-v1";
-let save={stars:{},miss:{},sound:true,yomi:true};
+let save={stars:{},miss:{},sound:true,yomi:true,horror:false,hst:0,hbest:0};
 try{Object.assign(save,JSON.parse(localStorage.getItem(KEY)||"{}"))}catch(e){}
 function persist(){try{localStorage.setItem(KEY,JSON.stringify(save))}catch(e){}}
+const unlocked=i=>(save.stars[i+1]||0)>=1;
+const allClear=()=>[0,1,2,3,4,5,6,7,8].every(unlocked);
+const H=()=>!!save.horror&&allClear();
+const pick=a=>a[Math.random()*a.length|0];
 
 /* ================= キャラクター ================= */
 function mix(hex,to,a){const p=s=>parseInt(s,16),c=[1,3,5].map(i=>p(hex.substr(i,2))),t=[1,3,5].map(i=>p(to.substr(i,2)));
@@ -181,7 +237,7 @@ const CH=[
  {n:"チャカ",inst:"クラップ",c:"#ff9f1c",sh:"pill",ey:54,gap:14,r:10,arm:[30,80,90,80],
   back:``,
   front:`<path d="M30 36 C30 12 90 12 90 36 Q60 28 30 36Z" fill="#2a4bb0"/><path d="M30 36 Q60 28 90 36 L92 38 Q60 31 28 38Z" fill="#1b3280"/><path d="M28 37 C14 36 8 40 10 44 Q22 42 34 40Z" fill="#1b3280"/><circle cx="60" cy="15" r="4" fill="#ffd23f"/><text x="60" y="31" font-size="11" text-anchor="middle" fill="#ffd23f" font-family="sans-serif" font-weight="900">K</text>
-   <g class="ar2"><line x1="96" y1="84" x2="116" y2="58" stroke="#c8925a" stroke-width="4.5" stroke-linecap="round"/><circle cx="116" cy="58" r="4" fill="#f1c48c"/></g>`},
+   <g><line x1="96" y1="84" x2="116" y2="58" stroke="#c8925a" stroke-width="4.5" stroke-linecap="round"/><circle cx="116" cy="58" r="4" fill="#f1c48c"/></g>`},
  {n:"ブーン",inst:"ベース",c:"#8e6cf0",sh:"blob",ey:78,gap:21,r:10.5,eye:"sleepy",arm:[10,94,110,94],
   back:``,
   front:`<path d="M16 74 C14 26 106 26 104 74" stroke="#2b2b3a" stroke-width="7" fill="none" stroke-linecap="round"/><rect x="5" y="62" width="18" height="28" rx="8" fill="#ff5a8a" stroke="#2b2b3a" stroke-width="3"/><rect x="97" y="62" width="18" height="28" rx="8" fill="#ff5a8a" stroke="#2b2b3a" stroke-width="3"/>`},
@@ -197,13 +253,32 @@ const CH=[
  {n:"ラララ",inst:"うた",c:"#ff6fb5",sh:"pear",ey:62,gap:14,r:10,eye:"lash",arm:[20,90,100,90],
   back:``,
   front:`<path d="M60 22 C48 6 32 10 37 25 C41 35 54 29 60 23Z" fill="#ffe14d" stroke="#d9a800" stroke-width="2"/><path d="M60 22 C72 6 88 10 83 25 C79 35 66 29 60 23Z" fill="#ffe14d" stroke="#d9a800" stroke-width="2"/><circle cx="60" cy="23" r="5" fill="#ffc400"/>
-   <g class="al2"><rect x="4" y="80" width="6" height="22" rx="3" fill="#555" transform="rotate(-18 7 91)"/><circle cx="10" cy="76" r="8" fill="#ccd"/><circle cx="8" cy="74" r="2.5" fill="#fff"/></g>`},
+   <g><rect x="4" y="80" width="6" height="22" rx="3" fill="#555" transform="rotate(-18 7 91)"/><circle cx="10" cy="76" r="8" fill="#ccd"/><circle cx="8" cy="74" r="2.5" fill="#fff"/></g>`},
  {n:"キラン",inst:"ベル",c:"#b38cff",sh:"drop",ey:76,gap:15,r:10,arm:[22,94,98,94],
   back:`<circle cx="60" cy="8" r="9" fill="#fff5a0" opacity=".55"/>`,
   front:`<circle cx="60" cy="9" r="4.5" fill="#fffbd1"/><path d="M18 40 l3 7 7 3 -7 3 -3 7 -3 -7 -7 -3 7 -3Z" fill="#ffd23f"/><path d="M102 48 l2.5 6 6 2.5 -6 2.5 -2.5 6 -2.5 -6 -6 -2.5 6 -2.5Z" fill="#fff"/><path d="M96 20 l1.8 4 4 1.8 -4 1.8 -1.8 4 -1.8 -4 -4 -1.8 4 -1.8Z" fill="#ffd23f"/>`},
  {n:"ボス",inst:"ブラス",c:"#3d4fb0",sh:"boss",ey:60,gap:16,eye:"shades",arm:[23,90,97,90],nocheek:true,
   back:``,
   front:`<path d="M34 34 C30 8 72 0 92 20 C80 14 64 16 58 28 C52 22 42 24 34 34Z" fill="#141a44"/><path d="M42 96 Q60 114 78 96" stroke="#ffc93c" stroke-width="4" fill="none"/><circle cx="60" cy="106" r="7" fill="#ffc93c" stroke="#c99400" stroke-width="2"/><text x="60" y="110" font-size="9" text-anchor="middle" fill="#7a5600" font-family="sans-serif" font-weight="900">9</text>`}
+];
+/* ホラー版の なまえ・たんとう・そうしょく */
+const HN=["ゾドン","ギチャカ","ブゥゥン","チッ…チ","くもり","バグピコ","ナキララ","ヒビラン","ヤミボス"];
+const HI=["しんぞうのおと","くさり","うなりごえ","とけい","ざわめき","こわれたオルゴール","ゆうれいのうた","われたベル","ひめい"];
+const HX=[
+ [`<path d="M40 34 C22 22 18 4 30 -4 C33 12 44 22 52 28Z" fill="#160b10" stroke="#4a0d14" stroke-width="2"/><path d="M80 34 C98 22 102 4 90 -4 C87 12 76 22 68 28Z" fill="#160b10" stroke="#4a0d14" stroke-width="2"/><circle cx="30" cy="-3" r="2.6" fill="#c2121f"/><circle cx="90" cy="-3" r="2.6" fill="#c2121f"/>`,
+  `<path d="M48 104 h24 M52 100 v8 M60 100 v8 M68 100 v8" stroke="#0a0508" stroke-width="2.5" stroke-linecap="round"/>`],
+ [``,`<path d="M30 36 C30 12 90 12 90 36 Q60 28 30 36Z" fill="#2a1418"/><path d="M46 16 l6 8 -4 3 6 6" stroke="#0a0508" stroke-width="2" fill="none"/><path d="M28 37 C14 36 8 40 10 44 L16 41 L20 45 L24 41 L34 40Z" fill="#1a0c10"/><line x1="96" y1="84" x2="105" y2="71" stroke="#5a3a28" stroke-width="4.5" stroke-linecap="round"/><line x1="109" y1="64" x2="117" y2="53" stroke="#5a3a28" stroke-width="4.5" stroke-linecap="round"/>`],
+ [``,`<path d="M16 74 C14 26 106 26 104 74" stroke="#151018" stroke-width="7" fill="none" stroke-linecap="round"/><rect x="5" y="62" width="18" height="28" rx="8" fill="#5a0d1a" stroke="#151018" stroke-width="3"/><rect x="97" y="62" width="18" height="28" rx="8" fill="#5a0d1a" stroke="#151018" stroke-width="3"/><path d="M106 90 C112 104 100 110 108 122 l-4 4 M108 122 l4 4" stroke="#151018" stroke-width="2" fill="none"/>`],
+ [`<g class="ant" style="transform-origin:60px 60px"><path d="M60 60 C60 50 54 44 64 36 L55 31" stroke="#2a2418" stroke-width="3" fill="none" stroke-linecap="round"/><circle class="flick" cx="54" cy="28" r="7" fill="#ff3020"/><circle cx="54" cy="28" r="12" fill="#ff3020" opacity=".15"/></g>`,
+  `<path d="M74 70 l-4 6 4 4 -5 6" stroke="#2a2010" stroke-width="2" fill="none"/>`],
+ [``,`<path d="M70 92 L62 106 L70 106 L60 124" stroke="#ffe14d" stroke-width="3.5" fill="none" stroke-linejoin="round" class="flick"/><g fill="#0e1a20"><path d="M30 114 l-2 7 a2 2 0 0 0 4 0Z"/><path d="M94 112 l-2 7 a2 2 0 0 0 4 0Z"/><path d="M50 30 l-2 7 a2 2 0 0 0 4 0Z"/></g>`],
+ [`<g class="ant" style="transform-origin:60px 30px"><line x1="60" y1="30" x2="53" y2="16" stroke="#333" stroke-width="3"/><circle class="flick" cx="52" cy="13" r="5.5" fill="#ff2020"/></g>`,
+  `<rect x="27" y="44" width="66" height="42" rx="12" fill="#0a0406"/><path d="M72 45 l-6 10 6 6 -8 12 4 12" stroke="#6a6a7a" stroke-width="1.5" fill="none"/><rect class="flick" x="29" y="68" width="62" height="3" fill="#ff2020" opacity=".55"/><rect class="flick" x="29" y="52" width="30" height="2" fill="#20ffff" opacity=".3"/><circle cx="16" cy="66" r="5" fill="#3a3a42"/><circle cx="104" cy="66" r="5" fill="#3a3a42"/><path d="M44 100 h32" stroke="#0a0406" stroke-width="3"/>`],
+ [``,`<path d="M60 22 C50 18 34 26 38 36 C44 38 54 30 60 24Z" fill="#5a5644" stroke="#2a2820" stroke-width="2"/><path d="M60 22 C70 18 86 26 82 36 C76 38 66 30 60 24Z" fill="#5a5644" stroke="#2a2820" stroke-width="2"/><circle cx="60" cy="24" r="4.5" fill="#3a3828"/><g><rect x="4" y="80" width="6" height="22" rx="3" fill="#1a1a1a" transform="rotate(-18 7 91)"/><circle cx="10" cy="76" r="8" fill="#45424e"/><path d="M8 102 C4 114 16 118 10 128" stroke="#1a1a1a" stroke-width="2" fill="none"/></g>`],
+ [`<circle cx="60" cy="8" r="14" fill="#5a1a8a" opacity=".4"/>`,
+  `<circle cx="60" cy="9" r="4.5" fill="#2a0840"/><path d="M60 14 L54 34 L62 44 L52 62" stroke="#0e0610" stroke-width="2.5" fill="none"/><path d="M92 72 L84 84 L92 92" stroke="#0e0610" stroke-width="2" fill="none"/><path d="M18 40 l3 7 7 3 -7 3 -3 7 -3 -7 -7 -3 7 -3Z" fill="#4a1070"/><path d="M100 30 l2 5 5 2 -5 2 -2 5 -2 -5 -5 -2 5 -2Z" fill="#4a1070"/>`],
+ [`<ellipse cx="60" cy="58" rx="46" ry="30" fill="#ff0000" opacity=".12"/>`,
+  `<path d="M34 34 C30 8 72 0 92 20 C80 14 64 16 58 28 C52 22 42 24 34 34Z" fill="#050308"/><path d="M42 96 Q50 106 55 105 M66 105 Q72 106 78 96" stroke="#6a5020" stroke-width="4" fill="none"/><circle cx="60" cy="112" r="5" fill="#3a2a10"/>`]
 ];
 let gid=0;
 function eyeSVG(ch,lid){
@@ -221,6 +296,7 @@ function eyeSVG(ch,lid){
   return `<g class="eyes" style="transform-origin:60px ${y}px">${s}</g>`;
 }
 function chrSVG(i,cls="",style=""){
+  if(H())return chrH(i,cls,style);
   const ch=CH[i],id="cg"+(gid++),dark=mix(ch.c,"#000000",.28),light=mix(ch.c,"#ffffff",.5);
   const my=ch.ey+(ch.eye==="led"?14:21),mx=60,robo=ch.eye==="led";
   const mc=robo?"#5ff5ff":"#3a1d2b";
@@ -254,78 +330,157 @@ function chrSVG(i,cls="",style=""){
     ${arm(lx,ly,"al",-1)}${arm(rx,ry,"ar",1)}
    </g></svg></div>`;
 }
+/* ---- ホラー版キャラ ---- */
+function chrH(i,cls="",style=""){
+  const ch=CH[i],id="hg"+(gid++);
+  const base=mix(mix(ch.c,"#4a4652",.6),"#000000",.18),dark=mix(base,"#000000",.55),light=mix(base,"#b8b0b8",.35);
+  const y=ch.ey,g=ch.gap,r=(ch.r||10)+1,xs=[60-g,60+g],mx=60,robo=ch.eye==="led";
+  const my=y+(robo?14:22);
+  const hollow=(x,rr)=>`<ellipse cx="${x}" cy="${y}" rx="${rr}" ry="${rr*1.25}" fill="#070307"/><circle class="glow" cx="${x+1}" cy="${y+2}" r="${rr*.62}" fill="#ff1a1a"/><circle cx="${x+1}" cy="${y+2}" r="${rr*.25}" fill="#ff6a5a"/>`;
+  let e="";
+  if(i===3){const rr=r*1.75;e=`<ellipse cx="60" cy="${y}" rx="${rr}" ry="${rr*1.1}" fill="#e8e0d0"/><path d="M${60-rr} ${y-3} l6 2 M${60+rr} ${y+2} l-6 -1 M${60-rr+3} ${y+8} l7 -3" stroke="#a01010" stroke-width="1.3"/><circle class="glow" cx="61" cy="${y+1}" r="${rr*.55}" fill="#ff1a1a"/><circle cx="61" cy="${y+1}" r="${rr*.32}" fill="#070307"/><circle cx="63" cy="${y-2}" r="2" fill="#fff"/>`}
+  else if(robo)e=`<rect x="${xs[0]-7}" y="${y-9}" width="14" height="18" rx="3" fill="#ff2020"/><rect x="${xs[0]-4}" y="${y-12}" width="14" height="4" fill="#ff2020" opacity=".6"/><rect x="${xs[1]-8}" y="${y-3}" width="16" height="6" rx="2" fill="#ff2020"/><rect class="glow" x="${xs[0]-11}" y="${y-13}" width="22" height="26" rx="6" fill="#ff2020"/>`;
+  else if(ch.eye==="shades")e=`<rect x="${60-g-13}" y="${y-9}" width="26" height="17" rx="7" fill="#050208"/><rect x="${60+g-13}" y="${y-9}" width="26" height="17" rx="7" fill="#050208"/><path d="M${60-g+13} ${y-4} H${60+g-13}" stroke="#050208" stroke-width="4"/><circle class="glow" cx="${60-g}" cy="${y}" r="6" fill="#ff1a1a"/><circle class="glow" cx="${60+g}" cy="${y}" r="6" fill="#ff1a1a"/><circle cx="${60-g}" cy="${y}" r="2.4" fill="#ff8a7a"/><circle cx="${60+g}" cy="${y}" r="2.4" fill="#ff8a7a"/><path d="M${60+g-10} ${y-8} l6 7 -3 3 7 6" stroke="#8a8a9a" stroke-width="1.4" fill="none"/>`;
+  else{
+    e=xs.map((x,k)=>(i===1&&k===0)?`<path d="M${x-r} ${y-r} L${x+r} ${y+r} M${x+r} ${y-r} L${x-r} ${y+r}" stroke="#0a0508" stroke-width="4" stroke-linecap="round"/>`:hollow(x,r*(i===7&&k===1?1.25:1))).join("");
+    if(i===2)e+=xs.map(x=>`<path d="M${x-r-1.5} ${y+1} A${r+1.5} ${r*1.3} 0 0 1 ${x+r+1.5} ${y+1}Z" fill="${dark}"/>`).join("");
+    if(i===4||i===6)e+=xs.map(x=>`<path d="M${x-2} ${y+r} q-2 12 1 22 q4 -8 2 -22Z" fill="#070307"/>`).join("");
+    if(i===6)e+=xs.map((x,k)=>{const d=k?1:-1;return `<path d="M${x+d*r*.9} ${y-r*.9} l${d*5} -5 M${x+d*r*.3} ${y-r*1.2} l${d*2} -6" stroke="#070307" stroke-width="2.4" stroke-linecap="round"/>`}).join("");
+  }
+  const teeth=(n,x0,y0,w,up)=>{let s="";for(let k=0;k<n;k++){const x=x0+k*w;s+=up?`M${x} ${y0} l${w/2} 5.5 l${w/2} -5.5Z`:`M${x} ${y0} l${w/2} -5 l${w/2} 5Z`}return `<path d="${s}" fill="#efe4c8"/>`};
+  const mouths=robo?
+   `<path class="mo mo-idle" d="M${mx-12} ${my} l4 -3 4 3 4 -3 4 3 4 -3 4 3" stroke="#ff2020" stroke-width="3" fill="none"/>
+    <path class="mo mo-happy" d="M${mx-14} ${my-4} L${mx-8} ${my+5} L${mx-2} ${my-4} L${mx+4} ${my+5} L${mx+10} ${my-4} L${mx+14} ${my+3}" stroke="#ff2020" stroke-width="4" fill="none" stroke-linejoin="round"/>
+    <path class="mo mo-sad" d="M${mx-10} ${my+3} Q${mx} ${my-5} ${mx+10} ${my+3}" stroke="#ff2020" stroke-width="4" fill="none"/>
+    <rect class="mo mo-sing" x="${mx-8}" y="${my-7}" width="16" height="14" rx="2" fill="#ff2020"/>`
+  :`<g class="mo mo-idle"><path d="M${mx-14} ${my} Q${mx} ${my+4} ${mx+14} ${my}" stroke="#0a0508" stroke-width="3" fill="none"/><path d="M${mx-10} ${my-4} v8 M${mx-3} ${my-3} v8 M${mx+4} ${my-3} v8 M${mx+11} ${my-4} v8" stroke="#0a0508" stroke-width="2.2" stroke-linecap="round"/></g>
+    <g class="mo mo-happy"><path d="M${mx-18} ${my-5} Q${mx} ${my+22} ${mx+18} ${my-5} Q${mx} ${my+3} ${mx-18} ${my-5}Z" fill="#070307"/>${teeth(6,mx-15,my-3,5,true)}${teeth(4,mx-10,my+11,5,false)}<path d="M${mx+8} ${my+8} q1 8 -1 12 q-2 -4 1 -12Z" fill="#8a0a14"/></g>
+    <path class="mo mo-sad" d="M${mx-13} ${my+4} q3.25 -6 6.5 0 t6.5 0 t6.5 0 t6.5 0" stroke="#0a0508" stroke-width="3" fill="none"/>
+    <g class="mo mo-sing"><ellipse cx="${mx}" cy="${my+5}" rx="9" ry="13" fill="#070307"/>${teeth(3,mx-7.5,my-6,5,true)}</g>`;
+  const [lx,ly,rx,ry]=ch.arm;
+  const arm=(x,yy,cl,dir)=>`<g class="${cl}" style="transform-origin:${x}px ${yy}px"><path d="M${x} ${yy} q${dir*12} 6 ${dir*10} 20 l${dir*-3} -3 l${dir*-2} 5 l${dir*-3} -4 q${dir*-2} -8 ${dir*-2} -18Z" fill="${base}" stroke="#0a0508" stroke-width="2.2" stroke-linejoin="round"/></g>`;
+  const crack=robo||ch.eye==="shades"?"":`<path d="M${88} ${y+6} l-6 7 5 4 -7 9" stroke="${dark}" stroke-width="2" fill="none"/>`;
+  return `<div class="chr ${/\bm-/.test(cls)?"":"m-idle"} ${cls}" data-i="${i}" style="${style}"><svg viewBox="0 0 120 130" aria-label="${HN[i]}" role="img">
+   <defs><radialGradient id="${id}" cx=".4" cy=".25" r=".9"><stop offset="0" stop-color="${light}"/><stop offset=".5" stop-color="${base}"/><stop offset="1" stop-color="${dark}"/></radialGradient></defs>
+   <ellipse cx="60" cy="125" rx="40" ry="5" fill="#000" opacity=".6"/>
+   <g class="bg">
+    <ellipse cx="45" cy="120" rx="11" ry="6.5" fill="${dark}"/><ellipse cx="75" cy="120" rx="11" ry="6.5" fill="${dark}"/>
+    ${HX[i][0]}
+    <path d="${SH[ch.sh]}" fill="url(#${id})" stroke="#0a0508" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M40 112 q2 8 0 12 q-3 -4 0 -12Z M78 113 q2 6 0 9 q-3 -3 0 -9Z" fill="${dark}"/>
+    ${HX[i][1]}
+    ${crack}
+    <g class="eyes" style="transform-origin:60px ${y}px">${e}</g>
+    ${mouths}
+    ${arm(lx,ly,"al",-1)}${arm(rx,ry,"ar",1)}
+   </g></svg></div>`;
+}
 function setMood(el,m){if(!el)return;el.classList.remove("m-idle","m-happy","m-sad","m-sing");el.classList.add("m-"+m)}
+const nm=i=>H()?HN[i]:CH[i].n, inst=i=>H()?HI[i]:CH[i].inst;
 
 /* ================= 音 ================= */
 let ac=null,master=null,noiseBuf=null;
 function ensureAC(){ try{
   if(!ac){ac=new (window.AudioContext||window.webkitAudioContext)();master=ac.createGain();master.connect(ac.destination);
-    noiseBuf=ac.createBuffer(1,ac.sampleRate,ac.sampleRate);const d=noiseBuf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;}
+    noiseBuf=ac.createBuffer(1,ac.sampleRate*2,ac.sampleRate);const d=noiseBuf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;}
   if(ac.state==="suspended")ac.resume();
   master.gain.value=save.sound?.8:0; return true;
 }catch(e){return false} }
 const mtof=m=>440*Math.pow(2,(m-69)/12);
 function env(g,t,a,peak,dur){g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(peak,t+a);g.gain.exponentialRampToValueAtTime(.0001,t+dur)}
 function osc(type,f,t,dur,peak,dest,a=.008){const o=ac.createOscillator(),g=ac.createGain();o.type=type;o.frequency.setValueAtTime(f,t);env(g,t,a,peak,dur);o.connect(g).connect(dest||master);o.start(t);o.stop(t+dur+.05);return o}
-function noise(t,dur,peak,ft,ff,q=1){const s=ac.createBufferSource(),f=ac.createBiquadFilter(),g=ac.createGain();s.buffer=noiseBuf;f.type=ft;f.frequency.value=ff;f.Q.value=q;env(g,t,.003,peak,dur);s.connect(f).connect(g).connect(master);s.start(t);s.stop(t+dur+.05)}
+function noise(t,dur,peak,ft,ff,q=1){const s=ac.createBufferSource(),f=ac.createBiquadFilter(),g=ac.createGain();s.buffer=noiseBuf;f.type=ft;f.frequency.value=ff;f.Q.value=q;env(g,t,.003,peak,dur);s.connect(f).connect(g).connect(master);s.start(t);s.stop(t+dur+.05);return f}
 function filt(type,f,q=1){const b=ac.createBiquadFilter();b.type=type;b.frequency.value=f;b.Q.value=q;b.connect(master);return b}
-const BPM=100,STEP=60/BPM/4;
-const CHORD=[[60,64,67],[57,60,64],[53,57,60],[55,59,62]],ROOT=[36,33,29,31];
+function voice(t,n,dur,f1,f2,peak,glide=0,vib=.012,att=.04){const o=ac.createOscillator(),g=ac.createGain(),a=ac.createBiquadFilter(),b=ac.createBiquadFilter(),lfo=ac.createOscillator(),lg=ac.createGain();
+  o.type="sawtooth";o.frequency.setValueAtTime(mtof(n),t);if(glide)o.frequency.linearRampToValueAtTime(mtof(n+glide),t+dur);
+  lfo.frequency.value=5;lg.gain.value=mtof(n)*vib;lfo.connect(lg).connect(o.frequency);
+  a.type=b.type="bandpass";a.frequency.value=f1;b.frequency.value=f2;a.Q.value=6;b.Q.value=8;
+  env(g,t,att,peak,dur);o.connect(a);o.connect(b);a.connect(g);b.connect(g);g.connect(master);o.start(t);lfo.start(t);o.stop(t+dur+.05);lfo.stop(t+dur+.05)}
+let STEP=.15;
+const stepLen=()=>60/(H()?76:100)/4;
 const _=null;
+/* ふつうの きょく (Cメジャー) */
+const CHORD=[[60,64,67],[57,60,64],[53,57,60],[55,59,62]],ROOT=[36,33,29,31];
 const MEL=[[72,_,_,76,_,_,79,_,76,_,74,_,72,_,_,_],[69,_,72,_,76,_,_,74,72,_,_,69,_,_,_,_],[65,_,69,_,72,_,_,77,76,_,74,_,72,_,_,_],[74,_,_,71,_,_,74,_,79,_,77,_,76,_,74,_]];
 const TR=[
  (t,s)=>{ if(s%4===0){const o=osc("sine",160,t,.42,.95);o.frequency.exponentialRampToValueAtTime(42,t+.13);noise(t,.02,.25,"highpass",3000)} },
  (t,s,b)=>{ if(s===4||s===12){noise(t,.16,.55,"bandpass",1500,.9);noise(t+.012,.12,.4,"bandpass",1200,.9);noise(t+.024,.2,.5,"bandpass",1400,.7)} if(b===3&&s===14)noise(t,.1,.25,"bandpass",1500,.9) },
- (t,s,b)=>{ if([0,3,6,8,11,14].includes(s)){const f=filt("lowpass",520,4);const o=osc("sawtooth",mtof(ROOT[b]+12+(s===11?12:0)),t,.24,.32,f);osc("sine",mtof(ROOT[b]+12),t,.26,.35)} },
+ (t,s,b)=>{ if([0,3,6,8,11,14].includes(s)){const f=filt("lowpass",520,4);osc("sawtooth",mtof(ROOT[b]+12+(s===11?12:0)),t,.24,.32,f);osc("sine",mtof(ROOT[b]+12),t,.26,.35)} },
  (t,s)=>{ if(s%2===0)noise(t,s%4===2?.07:.035,s%4===2?.28:.12,"highpass",7500) },
  (t,s,b)=>{ if(s===0)CHORD[b].forEach(n=>{[0,7].forEach(dt=>{const o=osc("triangle",mtof(n+12),t,STEP*16,.045,null,.35);o.detune.value=dt})}) },
  (t,s,b)=>{ const n=MEL[b][s]; if(n){const f=filt("lowpass",2400,2);osc("square",mtof(n),t,.26,.11,f);osc("triangle",mtof(n+12),t,.2,.04)} },
- (t,s,b)=>{ const map={8:0,10:1,12:2,14:1}; if(b%2===1&&s in map||b%2===0&&s===8){const n=CHORD[b][map[s]]+12;
-   const o=ac.createOscillator(),g=ac.createGain(),f1=ac.createBiquadFilter(),f2=ac.createBiquadFilter(),lfo=ac.createOscillator(),lg=ac.createGain();
-   o.type="sawtooth";o.frequency.value=mtof(n);lfo.frequency.value=5.5;lg.gain.value=mtof(n)*.012;lfo.connect(lg).connect(o.frequency);
-   f1.type=f2.type="bandpass";f1.frequency.value=780;f2.frequency.value=1150;f1.Q.value=6;f2.Q.value=8;
-   const dur=s===8&&b%2===0?.5:.28;env(g,t,.04,.5,dur);o.connect(f1);o.connect(f2);f1.connect(g);f2.connect(g);g.connect(master);o.start(t);lfo.start(t);o.stop(t+dur+.05);lfo.stop(t+dur+.05)} },
+ (t,s,b)=>{ const map={8:0,10:1,12:2,14:1}; if((b%2===1&&s in map)||(b%2===0&&s===8)){voice(t,CHORD[b][map[s]]+12,s===8&&b%2===0?.5:.28,780,1150,.5)} },
  (t,s,b)=>{ if(s%2===1){const n=CHORD[b][(s>>1)%3]+24;osc("sine",mtof(n),t,.5,.06);osc("sine",mtof(n)*2.76,t,.18,.02)} },
  (t,s,b)=>{ if(s===6||s===10||(b===3&&s===15)){const f=ac.createBiquadFilter();f.type="lowpass";f.Q.value=3;f.frequency.setValueAtTime(3200,t);f.frequency.exponentialRampToValueAtTime(500,t+.2);f.connect(master);CHORD[b].forEach(n=>osc("sawtooth",mtof(n+12),t,.2,.06,f))} }
 ];
+/* ホラーの きょく (Dマイナー・おそい・ふきょうわおん) */
+const HCH=[[62,65,69],[58,62,65],[55,58,62],[57,61,64]],HROOT=[38,34,31,33];
+const HMEL=[[74,_,_,77,_,_,76,_,74,_,_,73,74,_,_,_],[70,_,_,74,_,_,77,_,76,_,74,_,_,_,_,_],[67,_,70,_,74,_,_,75,74,_,70,_,_,_,_,_],[69,_,_,73,_,_,76,_,73,_,_,70,69,_,_,_]];
+const HTR=[
+ (t,s)=>{ if(s===0||s===8){const o=osc("sine",85,t,.32,.95);o.frequency.exponentialRampToValueAtTime(36,t+.16)} if(s===2||s===10){const o=osc("sine",72,t,.26,.6);o.frequency.exponentialRampToValueAtTime(34,t+.13)} },
+ (t,s,b)=>{ if(s===4||s===12){noise(t,.5,.35,"bandpass",2600,14);osc("square",311,t,.08,.05);osc("square",443,t+.012,.07,.04);osc("square",371,t+.03,.06,.03)} if(b===3&&s===14)noise(t,.7,.3,"bandpass",1700,10) },
+ (t,s,b)=>{ if(s===0){const f=filt("lowpass",240,7);[0,11].forEach(dt=>{const o=osc("sawtooth",mtof(HROOT[b]),t,STEP*16,.26,f,.5);o.detune.value=dt})} if(s===12){const o=osc("sawtooth",mtof(HROOT[b]+1),t,.5,.08,filt("lowpass",300,5))} },
+ (t,s)=>{ if(s%4===0)noise(t,.025,s%8===0?.3:.18,"highpass",s%8===0?5200:8800,3) },
+ (t,s,b)=>{ if(s===0)[...HCH[b],HCH[b][0]+1].forEach((n,k)=>{const o=osc("triangle",mtof(n+12),t,STEP*16,k===3?.02:.035,null,.9);o.detune.value=k*4}) },
+ (t,s,b)=>{ const n=HMEL[b][s]; if(n){const dt=Math.random()*44-22;const o=osc("sine",mtof(n+12),t,1.1,.13);o.detune.value=dt;const o2=osc("sine",mtof(n+12)*4.03,t,.28,.03);o2.detune.value=dt} },
+ (t,s,b)=>{ if(s===0||(b%2===1&&s===8))voice(t,HCH[b][2],1.3,340,820,.45,-1.5,.02,.3) },
+ (t,s,b)=>{ if(s===0||s===10){const f=mtof(HCH[b][0]+24);[[1,.07,1.8],[2.41,.03,1.1],[5.13,.015,.6]].forEach(([m,g,d])=>{const o=osc("sine",f*m,t,d,g);o.detune.value=-38})} },
+ (t,s,b)=>{ if((b===1&&s===6)||(b===3&&s===12)){const f=ac.createBiquadFilter();f.type="bandpass";f.Q.value=4;f.frequency.setValueAtTime(700,t);f.frequency.exponentialRampToValueAtTime(3800,t+.7);f.connect(master);[0,6,1].forEach(k=>{const o=osc("sawtooth",mtof(HCH[b][0]+12+k),t,.8,.08,f,.06);o.frequency.exponentialRampToValueAtTime(mtof(HCH[b][0]+20+k),t+.7)})} }
+];
+const tracks=()=>H()?HTR:TR;
 const Eng={playing:false,set:new Set(),step:0,next:0,timer:null,
   start(set){ if(!ensureAC())return; this.set=set; if(this.playing)return; this.playing=true;this.step=0;this.next=ac.currentTime+.06;
     this.timer=setInterval(()=>this.tick(),25); },
   stop(){this.playing=false;clearInterval(this.timer)},
-  tick(){ while(this.next<ac.currentTime+.12){const s=this.step%16,b=(this.step>>4)%4;this.set.forEach(i=>{try{TR[i](this.next,s,b)}catch(e){}});this.next+=STEP;this.step++} }
+  tick(){ const T=tracks(); while(this.next<ac.currentTime+.12){const s=this.step%16,b=(this.step>>4)%4;this.set.forEach(i=>{try{T[i](this.next,s,b)}catch(e){}});this.next+=STEP;this.step++} }
 };
-function hit(i,bar=0){ if(!ensureAC())return; const t0=ac.currentTime+.03; for(let s=0;s<8;s++){try{TR[i](t0+s*STEP*.85,s+(i===6?8:0),i===6?1:bar)}catch(e){}} }
+function hit(i){ if(!ensureAC())return; const T=tracks(),t0=ac.currentTime+.03; for(let s=0;s<16;s++){try{T[i](t0+s*STEP*.55,s,1)}catch(e){}} }
 function tone(seq){ if(!ensureAC())return; let t=ac.currentTime; seq.forEach(([f,d,type])=>{osc(type||"triangle",f,t,d,.16);t+=d*.8}) }
-const SE={ok:()=>tone([[880,.1],[1320,.16]]),ng:()=>tone([[220,.25,"square"],[180,.3,"square"]]),fin:()=>tone([[523,.15],[659,.15],[784,.15],[1047,.4]]),tap:()=>tone([[660,.06]])};
-function speak(txt){ if(!save.sound)return; try{const u=new SpeechSynthesisUtterance(txt);u.lang="ja-JP";u.rate=.9;speechSynthesis.cancel();speechSynthesis.speak(u);}catch(e){} }
+function scream(){ if(!ensureAC())return; const t=ac.currentTime;
+  const f=noise(t,.6,.5,"bandpass",900,3);f.frequency.exponentialRampToValueAtTime(3500,t+.5);
+  [0,1,6].forEach(k=>{const o=osc("sawtooth",mtof(70+k),t,.6,.08);o.frequency.exponentialRampToValueAtTime(mtof(82+k),t+.4)});
+  const o=osc("sine",60,t,.5,.6);o.frequency.exponentialRampToValueAtTime(30,t+.4) }
+const SE={
+  ok:()=>H()?tone([[440,.18,"sine"],[466,.35,"sine"]]):tone([[880,.1],[1320,.16]]),
+  ng:()=>H()?scream():tone([[220,.25,"square"],[180,.3,"square"]]),
+  fin:()=>H()?tone([[294,.3,"sine"],[349,.3,"sine"],[415,.3,"sine"],[587,.8,"sine"]]):tone([[523,.15],[659,.15],[784,.15],[1047,.4]]),
+  tap:()=>H()?tone([[150,.12,"sine"]]):tone([[660,.06]])};
+function speak(txt){ if(!save.sound)return; try{const u=new SpeechSynthesisUtterance(txt);u.lang="ja-JP";u.rate=H()?.75:.9;u.pitch=H()?.3:1;speechSynthesis.cancel();speechSynthesis.speak(u);}catch(e){} }
+function scare(i){ const d=document.createElement("div");d.className="scare";d.innerHTML=chrH(i,"m-happy");document.body.appendChild(d);scream();setTimeout(()=>d.remove(),720) }
 
 /* ================= 画面共通 ================= */
 const app=document.getElementById("app");
-const h=(s)=>{Eng.stop();app.innerHTML=s;window.scrollTo(0,0)};
+const h=(s)=>{Eng.stop();document.body.classList.toggle("horror",H());STEP=stepLen();
+  document.documentElement.style.setProperty("--beat",(STEP*4).toFixed(3)+"s");document.body.style.setProperty("--beat",(STEP*4).toFixed(3)+"s");
+  app.innerHTML=s;window.scrollTo(0,0)};
 const starHtml=n=>`<span class="stars">${[1,2,3].map(i=>`<i class="${i<=n?"on":""}">★</i>`).join("")}</span>`;
 const missKey=(a,b)=>a+"x"+b;
-const unlocked=i=>(save.stars[i+1]||0)>=1;
-const pick=a=>a[Math.random()*a.length|0];
 
 /* ---- ホーム ---- */
 function home(){
+  const hz=H();
   const total=Object.values(save.stars).reduce((s,v)=>s+v,0);
   const nMem=CH.filter((_,i)=>unlocked(i)).length;
   const muted=new Set();
   h(`<div class="screen">
-    <h1><small>たのしく おぼえよう</small>くくマスター</h1>
+    <h1><small>${hz?"ようこそ… ホラーモードへ…":"たのしく おぼえよう"}</small>くくマスター${hz?" ホラー":""}</h1>
     <section class="stage">
-      <div class="stage-top"><div class="nm"><b>くくバンド</b><span>なかま ${nMem} / 9 ・ ほし ★ ${total} / 27</span></div>
+      <div class="stage-top"><div class="nm"><b>${hz?"くくバンド ホラー":"くくバンド"}</b><span>なかま ${nMem} / 9 ・ ほし ★ ${total} / 27</span></div>
         <button class="playbtn" id="play">▶ えんそう</button></div>
-      <div class="crew">${CH.map((c,i)=>`<button class="mem" data-i="${i}">${chrSVG(i,unlocked(i)?"":"locked",`animation-delay:${-i*.37}s`)}<span>${unlocked(i)?c.n:"？？？"}</span></button>`).join("")}</div>
-      <p class="stage-tip" id="tip">${nMem?"キャラを タップすると おとが なるよ。えんそう ちゅうに タップで オン／オフ！":"だんの「バラバラ チャレンジ」で ★を とると、なかまが ふえるよ！"}</p>
+      <div class="crew">${CH.map((c,i)=>`<button class="mem" data-i="${i}">${chrSVG(i,unlocked(i)?"":"locked",`animation-delay:${-i*.37}s`)}<span>${unlocked(i)?nm(i):"？？？"}</span></button>`).join("")}</div>
+      <p class="stage-tip" id="tip">${hz?"…キャラを タップすると… なにかが きこえる…":nMem?"キャラを タップすると おとが なるよ。えんそう ちゅうに タップで オン／オフ！":"だんの「バラバラ チャレンジ」で ★を とると、なかまが ふえるよ！"}</p>
     </section>
+    ${allClear()?(hz?`<section class="hzone"><h2>ホラー チャレンジ</h2><div class="row">
+        <button class="big" id="hfill">あなうめ ホラー<small>□に はいる かずは？ 20もん・6びょう ${starHtml(save.hst||0)}</small></button>
+        <button class="big" id="hsurv">ゴースト サバイバル<small>いのち 3つ・どんどん はやくなる ・ さいこう ${save.hbest||0}もん</small></button>
+      </div></section>`
+      :`<button class="big hbtn" id="hz">？？？ くくマスター ホラーモード ？？？</button>`):""}
     <div class="grid">${COLORS.map((c,i)=>`<button class="dan" style="--c:${c}" data-d="${i+1}"><span class="num"><b>${i+1}</b><small>のだん</small></span>${chrSVG(i,unlocked(i)?"":"locked")}${starHtml(save.stars[i+1]||0)}</button>`).join("")}</div>
     <div class="row">
       <button class="big dark" id="mix">ぜんぶ ミックス</button>
       <button class="big" id="weak">にがて チャレンジ</button>
     </div>
-    <div class="row"><button class="toggle" id="snd">おと：${save.sound?"オン":"オフ"}</button></div>
+    <div class="row"><button class="toggle" id="snd">おと：${save.sound?"オン":"オフ"}</button>${hz?`<button class="toggle" id="hz">ふつうモードに もどる</button>`:""}</div>
   </div>`);
   const mems=[...app.querySelectorAll(".mem")];
   const refresh=()=>mems.forEach(m=>{const i=+m.dataset.i,c=m.querySelector(".chr");if(!unlocked(i))return;
@@ -340,29 +495,35 @@ function home(){
   mems.forEach(m=>m.onclick=()=>{
     const i=+m.dataset.i,c=m.querySelector(".chr");
     if(!unlocked(i)){tip.textContent=`${i+1}のだんで ★を とると なかまに なるよ（${CH[i].inst}）`;if(!Eng.playing)hit(i);return}
-    if(Eng.playing){muted.has(i)?muted.delete(i):muted.add(i);Eng.set=activeSet();tip.textContent=`${CH[i].n}（${CH[i].inst}）を ${muted.has(i)?"おやすみ":"さんか"}`;refresh();return}
-    hit(i);tip.textContent=`${CH[i].n}：${CH[i].inst}`;c.classList.add("dance");setMood(c,i===6?"sing":"happy");
+    if(Eng.playing){muted.has(i)?muted.delete(i):muted.add(i);Eng.set=activeSet();tip.textContent=`${nm(i)}（${inst(i)}）を ${muted.has(i)?"おやすみ":"さんか"}`;refresh();return}
+    hit(i);tip.textContent=`${nm(i)}：${inst(i)}`;c.classList.add("dance");setMood(c,i===6?"sing":"happy");
     clearTimeout(c._t);c._t=setTimeout(()=>{c.classList.remove("dance");setMood(c,"idle")},1400);
   });
   app.querySelectorAll(".dan").forEach(b=>b.onclick=()=>{SE.tap();menu(+b.dataset.d)});
   mix.onclick=()=>{SE.tap();quiz({title:"ぜんぶ ミックス",dans:[1,2,3,4,5,6,7,8,9],n:15,color:"#ffe0a8"})};
   weak.onclick=()=>{SE.tap();weakQuiz()};
   snd.onclick=()=>{save.sound=!save.sound;persist();if(master)master.gain.value=save.sound?.8:0;snd.textContent="おと："+(save.sound?"オン":"オフ")};
+  const hzb=document.getElementById("hz");
+  if(hzb)hzb.onclick=()=>{save.horror=!save.horror;persist();home();if(save.horror){scare(8)}else SE.tap()};
+  if(hz){
+    hfill.onclick=()=>{SE.tap();quiz({title:"あなうめ ホラー",dans:[1,2,3,4,5,6,7,8,9],n:20,fill:true,limit:6,color:"#5a0a14",hard:"fill"})};
+    hsurv.onclick=()=>{SE.tap();quiz({title:"ゴースト サバイバル",dans:[1,2,3,4,5,6,7,8,9],fill:true,survival:true,color:"#3a0a4a",hard:"surv"})};
+  }
 }
 
 /* ---- 段メニュー ---- */
 function menu(d){
-  const c=COLORS[d-1],i=d-1,ch=CH[i];
+  const c=COLORS[d-1],i=d-1;
   h(`<div class="screen">
     <div class="top"><button class="back" id="bk">← もどる</button><div class="ttl">${d} のだん</div><span class="spacer"></span></div>
     <div class="card">
       <div class="menuhead">${chrSVG(i,unlocked(i)?"":"locked")}
         <div><div class="eq" style="font-size:clamp(44px,10vw,72px)">${d} × □</div>${starHtml(save.stars[d]||0)}</div></div>
-      <p class="note">${unlocked(i)?`${ch.n}（${ch.inst}）は もう なかま！ ★3を めざそう`:`「バラバラ チャレンジ」で ★1いじょう とると、${ch.inst}の なかまが くわわるよ`}</p>
+      <p class="note">${unlocked(i)?`${nm(i)}（${inst(i)}）は もう なかま！ ★3を めざそう`:`「バラバラ チャレンジ」で ★1いじょう とると、${CH[i].inst}の なかまが くわわるよ`}</p>
       <p class="note">★1 = 7もん いじょう ／ ★2 = 9もん いじょう ／ ★3 = ぜんもん せいかい ＋ はやい</p>
     </div>
-    <button class="big" style="background:${c}" id="learn">① おぼえる（となえる）</button>
-    <button class="big" style="background:${c}" id="order">② じゅんばん チャレンジ</button>
+    <button class="big" style="background:${H()?"":c};color:${H()?"":"#23324a"}" id="learn">① おぼえる（となえる）</button>
+    <button class="big" style="background:${H()?"":c};color:${H()?"":"#23324a"}" id="order">② じゅんばん チャレンジ</button>
     <button class="big dark" id="rand">③ バラバラ チャレンジ ★</button>
   </div>`);
   bk.onclick=home;
@@ -378,24 +539,23 @@ function learnMode(d){
     h(`<div class="screen">
       <div class="top"><button class="back" id="bk">← もどる</button><div class="ttl">${d}のだん おぼえる</div><span class="spacer"></span></div>
       <div class="pick" style="--c:${c}">${[1,2,3,4,5,6,7,8,9].map(k=>`<button data-k="${k}" class="${k===i?"cur":""}">${k}</button>`).join("")}</div>
-      <div class="qrow"><div class="buddy">${chrSVG(d-1,"",)}</div>
+      <div class="qrow"><div class="buddy">${chrSVG(d-1)}</div>
       <div class="card" id="cd">
         <div class="eq">${d} × ${i} = ${hide?`<span class="q">?</span>`:d*i}</div>
         <div class="yomi">${hide?"・・・":YOMI[d-1][i-1]}</div>
       </div></div>
       <div class="row">
         <button class="big" id="prev">← まえ</button>
-        <button class="big" style="background:${c}" id="say">こえで きく</button>
+        <button class="big" style="${H()?"":`background:${c};color:#23324a`}" id="say">こえで きく</button>
         <button class="big" id="next">つぎ →</button>
       </div>
       <div class="row"><button class="toggle" id="hd">こたえを ${hide?"みせる":"かくす"}</button></div>
       <p class="note">「こたえを かくす」にして、こえに だして いってから「みせる」で たしかめよう</p>
     </div>`);
-    const bd=app.querySelector(".buddy .chr");
     bk.onclick=()=>menu(d);
     prev.onclick=()=>{i=i>1?i-1:9;draw();auto()};
     next.onclick=()=>{i=i<9?i+1:1;draw();auto()};
-    say.onclick=()=>{speak(YOMI[d-1][i-1]);sing(bd)};
+    say.onclick=()=>{speak(YOMI[d-1][i-1]);sing(app.querySelector(".buddy .chr"))};
     hd.onclick=()=>{hide=!hide;draw()};
     cd.onclick=()=>{if(hide){hide=false;draw();auto()}};
     app.querySelectorAll(".pick button").forEach(b=>b.onclick=()=>{i=+b.dataset.k;draw();auto()});
@@ -414,6 +574,9 @@ function makeChoices(a,b){
   while(set.size<4)set.add(1+(Math.random()*81|0));
   return shuffle([...set]);
 }
+function smallChoices(ans){const set=new Set([ans]);const c=shuffle([ans-1,ans+1,ans-2,ans+2,ans+3,ans-3].filter(x=>x>=1&&x<=9));for(const x of c){if(set.size>=4)break;set.add(x)}return shuffle([...set])}
+const ansOf=q=>q[2]==="a"?q[0]:q[2]==="b"?q[1]:q[0]*q[1];
+function genQ(dans,fill){return [pick(dans),1+(Math.random()*9|0),fill?pick(["a","b","c"]):"c"]}
 function weakQuiz(){
   const list=Object.entries(save.miss).filter(([,v])=>v>0).sort((x,y)=>y[1]-x[1]).slice(0,10).map(([k])=>k.split("x").map(Number));
   if(!list.length){
@@ -424,26 +587,33 @@ function weakQuiz(){
   quiz({title:"にがて チャレンジ",fixed:list,n:list.length,color:"#ffc9b0",weak:true});
 }
 const CHEER=["いいね！","せいかい！","ナイス！","やったね！"],HOT=["ノってきた！","とまらない！","さいこう！","バンド もりあがり！"],OOPS=["どんまい！","つぎ いこう！","おしい！"];
+const HCHEER=["…せいかい…","ククク… やるね","まだ にがさない…","…ふーん"],HHOT=["…こわく ないの？","ヒヒヒ… つよいね","やみが ざわめく…"],HOOPS=["…まちがえたね…","つかまえた…","ヒヒヒ…","にげられないよ…"];
 function quiz(opt){
+  const hz=H();
   let qs;
-  if(opt.fixed)qs=shuffle(opt.fixed.slice());
-  else if(opt.ordered)qs=[1,2,3,4,5,6,7,8,9].map(b=>[opt.dans[0],b]);
-  else{const all=[];opt.dans.forEach(a=>{for(let b=1;b<=9;b++)all.push([a,b])});shuffle(all);qs=all.slice(0,opt.n);
-    while(qs.length<opt.n)qs.push(all[Math.random()*all.length|0]);}
+  if(opt.fixed)qs=shuffle(opt.fixed.map(([a,b])=>[a,b,"c"]));
+  else if(opt.ordered)qs=[1,2,3,4,5,6,7,8,9].map(b=>[opt.dans[0],b,"c"]);
+  else if(opt.survival)qs=[];
+  else{const all=[];opt.dans.forEach(a=>{for(let b=1;b<=9;b++)all.push([a,b,opt.fill?pick(["a","b","c"]):"c"])});shuffle(all);qs=all.slice(0,opt.n);
+    while(qs.length<opt.n)qs.push(genQ(opt.dans,opt.fill));}
   const mates=CH.map((_,i)=>i).filter(unlocked);
   const buddy=opt.buddy!=null?opt.buddy:(mates.length?pick(mates):0);
-  const LIMIT=10;
-  let idx=0,score=0,combo=0,best=0,log=[],timer=null,left=LIMIT,t0=Date.now(),locked=false;
+  let idx=0,score=0,combo=0,best=0,log=[],timer=null,limit=10,left=10,t0=Date.now(),locked=false,lives=3;
   function draw(){
-    const [a,b]=qs[idx],ch=makeChoices(a,b);
-    locked=false;left=LIMIT;
+    if(opt.survival&&idx>=qs.length)qs.push(genQ(opt.dans,true));
+    const q=qs[idx],[a,b,bl]=q,ans=ansOf(q),ch=bl==="c"?makeChoices(a,b):smallChoices(ans);
+    limit=opt.survival?Math.max(2.8,7-idx*.18):(opt.limit||10);
+    locked=false;left=limit;
+    const slot=`<span class="q" id="qa">?</span>`;
+    const eq=`${bl==="a"?slot:a} × ${bl==="b"?slot:b} = ${bl==="c"?slot:a*b}`;
+    const L=hz?HCHEER:CHEER;
     h(`<div class="screen">
       <div class="top"><button class="back" id="bk">← やめる</button><div class="ttl">${opt.title}</div><span class="spacer"></span></div>
-      <div class="hud"><span>${idx+1} / ${qs.length} もん</span><span class="combo">${combo>=2?combo+" れんぞく！":""}</span><span>⭕ ${score}</span></div>
-      <div class="bar"><div id="tb" style="width:100%;background:${CH[a-1].c}"></div></div>
+      <div class="hud"><span>${opt.survival?`${idx+1} もんめ`:`${idx+1} / ${qs.length} もん`}</span><span class="combo">${combo>=2?combo+" れんぞく！":""}</span><span>${opt.survival?"🕯️".repeat(lives)+"💀".repeat(3-lives):"⭕ "+score}</span></div>
+      <div class="bar"><div id="tb" style="width:100%;background:${hz?"#c2121f":CH[a-1].c}"></div></div>
       <div class="qrow">
-        <div class="buddy"><div class="bubble" id="bb">${idx===0?"がんばって！":""}</div>${chrSVG(buddy,combo>=3?"dance":"")}</div>
-        <div class="card pop" id="cd"><div class="eq">${a} × ${b} = <span class="q" id="qa">?</span></div>
+        <div class="buddy"><div class="bubble" id="bb">${idx===0?(hz?"…にげられるかな？":"がんばって！"):""}</div>${chrSVG(buddy,combo>=3?"dance":"")}</div>
+        <div class="card pop" id="cd"><div class="eq">${eq}</div>
           <div class="yomi" id="ym">${save.yomi&&opt.ordered?YOMI[a-1][b-1].replace(/[がじゅう].*$/,"…"):"&nbsp;"}</div></div>
       </div>
       <div class="choices">${ch.map(x=>`<button class="ch" data-v="${x}">${x}</button>`).join("")}</div>
@@ -452,52 +622,60 @@ function quiz(opt){
     bk.onclick=()=>{clearInterval(timer);opt.buddy!=null?menu(opt.dans[0]):home()};
     app.querySelectorAll(".ch").forEach(btn=>btn.onclick=()=>answer(btn,+btn.dataset.v));
     clearInterval(timer);
-    timer=setInterval(()=>{left-=.1;const el=document.getElementById("tb");if(el)el.style.width=Math.max(0,left/LIMIT*100)+"%";if(left<=0)answer(null,-1)},100);
+    timer=setInterval(()=>{left-=.1;const el=document.getElementById("tb");if(el)el.style.width=Math.max(0,left/limit*100)+"%";if(left<=0)answer(null,-1)},100);
   }
   function answer(btn,v){
     if(locked)return;locked=true;clearInterval(timer);
-    const [a,b]=qs[idx],ans=a*b,ok=v===ans,k=missKey(a,b);
+    const q=qs[idx],[a,b]=q,ans=ansOf(q),ok=v===ans,k=missKey(a,b);
     log.push({a,b,ok});
-    const qa=document.getElementById("qa");qa.textContent=ans;qa.style.color=ok?"var(--good)":"var(--bad)";qa.style.borderColor="transparent";
+    const qa=document.getElementById("qa");qa.textContent=ans;qa.classList.add("shown");qa.style.color=ok?"var(--good)":"var(--bad)";
     document.getElementById("ym").textContent=YOMI[a-1][b-1];
     app.querySelectorAll(".ch").forEach(x=>{if(+x.dataset.v===ans)x.classList.add("ok")});
     const bd=app.querySelector(".buddy .chr"),bb=document.getElementById("bb");
     if(ok){score++;combo++;best=Math.max(best,combo);
-      hit(buddy,(a+b)%4);SE.ok();
+      hit(buddy);SE.ok();
       bd.classList.remove("sad");bd.classList.add("dance");setMood(bd,buddy===6?"sing":"happy");
-      bb.textContent=combo>=3?pick(HOT).replace("！",combo>=5?"！！":"！"):pick(CHEER);
+      bb.textContent=combo>=3?pick(hz?HHOT:HOT):pick(hz?HCHEER:CHEER);
       if(save.miss[k])save.miss[k]=Math.max(0,save.miss[k]-1);}
-    else{combo=0;SE.ng();if(btn)btn.classList.add("ng");save.miss[k]=(save.miss[k]||0)+2;
-      bd.classList.remove("dance");bd.classList.add("sad");setMood(bd,"sad");bb.textContent=left<=0?"じかん ぎれ…":pick(OOPS);
-      document.getElementById("cd").classList.add("shake");speak(YOMI[a-1][b-1]);}
+    else{combo=0;if(btn)btn.classList.add("ng");save.miss[k]=(save.miss[k]||0)+2;
+      if(opt.survival)lives--;
+      if(hz){scare(buddy);setMood(bd,"happy")}else{SE.ng();bd.classList.remove("dance");bd.classList.add("sad");setMood(bd,"sad")}
+      bb.textContent=left<=0?(hz?"…じかんぎれ…":"じかん ぎれ…"):pick(hz?HOOPS:OOPS);
+      document.getElementById("cd").classList.add("shake");setTimeout(()=>speak(YOMI[a-1][b-1]),hz?700:0);}
     bb.classList.remove("pop");void bb.offsetWidth;bb.classList.add("pop");
     persist();
-    setTimeout(()=>{idx++;idx<qs.length?draw():finish()},ok?800:2000);
+    const over=opt.survival?lives<=0:idx+1>=qs.length;
+    setTimeout(()=>{idx++;over?finish():draw()},ok?800:2100);
   }
   function finish(){
-    const sec=Math.round((Date.now()-t0)/1000),n=qs.length;
-    let st=0;
-    if(score>=Math.ceil(n*.7))st=1; if(score>=n-1)st=2; if(score===n&&sec<=n*4+4)st=3; else if(score===n)st=Math.max(st,2);
-    let newRec=false,joined=false;
-    if(opt.starFor){const prev=save.stars[opt.starFor]||0;if(st>prev){save.stars[opt.starFor]=st;newRec=true;joined=prev===0;persist();}}
-    const msg=score===n?"かんぺき！すごい！":score>=n*.7?"よく できました！":"もう いっかい やってみよう！";
-    const good=score>=n*.7;
+    const sec=Math.round((Date.now()-t0)/1000),n=log.length;
+    let st=0,newRec=false,joined=false,awakened=false,rec="";
+    if(opt.survival){ if(score>(save.hbest||0)){save.hbest=score;newRec=true;persist()} rec=`いきのこった もんだい ${score}もん${newRec?" ・ さいこう きろく！":""}（さいこう ${save.hbest}）`; st=score>=40?3:score>=25?2:score>=12?1:0; }
+    else{
+      if(opt.hard==="fill"){st=score===n&&sec<=n*5?3:score>=18?2:score>=14?1:0;if(st>(save.hst||0)){save.hst=st;newRec=true;persist()}}
+      else{ if(score>=Math.ceil(n*.7))st=1; if(score>=n-1)st=2; if(score===n&&sec<=n*4+4)st=3; else if(score===n)st=Math.max(st,2); }
+      if(opt.starFor){const prev=save.stars[opt.starFor]||0,was=allClear();if(st>prev){save.stars[opt.starFor]=st;newRec=true;joined=prev===0;persist();awakened=!was&&allClear()}}
+    }
+    const good=opt.survival?score>=12:score>=n*.7;
+    const msg=hz?(good?"…なかなか やるね… ククク":"…また あそぼうね… ヒヒヒ"):(score===n?"かんぺき！すごい！":good?"よく できました！":"もう いっかい やってみよう！");
     h(`<div class="screen">
       ${joined?`<div class="join pop">${chrSVG(buddy,"dance m-happy")}<h2>${CH[buddy].n}が なかまに なった！</h2><p>${CH[buddy].inst}たんとう。ホームの ステージで えんそう できるよ</p></div>`:""}
+      ${awakened?`<div class="awake"><h2>…なにかが めざめた…</h2><p>9にん ぜんいん そろった。ホームに「くくマスター ホラーモード」が あらわれたよ… こわくなければ おしてみて…</p></div>`:""}
       <div class="card pop">
-        ${joined?"":chrSVG(buddy,good?"dance":"sad","--s:130px")}
+        ${joined?"":chrSVG(buddy,good?"dance":(hz?"":"sad"),"--s:130px")}
         ${starHtml(st).replace('class="stars"','class="stars" style="font-size:56px"')}
-        <div class="eq" style="font-size:clamp(40px,9vw,64px)">${score} / ${n}</div>
-        <div class="yomi" style="color:var(--ink)">${msg}</div>
-        <p class="note">じかん ${sec}びょう ・ さいだい ${best}れんぞく${newRec&&!joined?" ・ ★ほしを ゲット！":""}</p>
+        <div class="eq" style="font-size:clamp(40px,9vw,64px)">${opt.survival?`${score} もん`:`${score} / ${n}`}</div>
+        <div class="yomi">${msg}</div>
+        <p class="note">${rec||`じかん ${sec}びょう ・ さいだい ${best}れんぞく${newRec&&!joined?" ・ ★ほしを ゲット！":""}`}</p>
         <div class="list">${log.map(l=>`<div class="${l.ok?"":"miss"}">${l.ok?"⭕":"❌"} ${l.a}×${l.b}=${l.a*l.b}</div>`).join("")}</div>
       </div>
-      <div class="row"><button class="big" style="background:${opt.color}" id="again">もう いっかい</button><button class="big" id="hm">ホームへ</button></div>
+      <div class="row"><button class="big" id="again">もう いっかい</button><button class="big" id="hm">ホームへ</button></div>
     </div>`);
-    const c=app.querySelector(".chr");setMood(c,good?(buddy===6?"sing":"happy"):"sad");
+    const c=app.querySelector(".card .chr")||app.querySelector(".chr");setMood(c,good?(buddy===6?"sing":"happy"):(hz?"happy":"sad"));
     if(joined){Eng.start(new Set([buddy]));setTimeout(()=>{if(Eng.playing)Eng.stop()},STEP*16*2*1000)}
     else if(good)hit(buddy); else SE.fin();
     if(good&&!joined)setTimeout(SE.fin,600);
+    if(awakened)setTimeout(()=>{if(ensureAC())scream()},1500);
     again.onclick=()=>quiz(opt);
     hm.onclick=home;
   }
