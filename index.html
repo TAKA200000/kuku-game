@@ -450,6 +450,10 @@ const SE={
   ng:()=>H()?scream():tone([[220,.25,"square"],[180,.3,"square"]]),
   fin:()=>H()?tone([[294,.3,"sine"],[349,.3,"sine"],[415,.3,"sine"],[587,.8,"sine"]]):tone([[523,.15],[659,.15],[784,.15],[1047,.4]]),
   tap:()=>H()?tone([[150,.12,"sine"]]):tone([[660,.06]])};
+let vAud=null;
+function sayKuku(a,b){ if(!save.sound)return; try{speechSynthesis.cancel();if(vAud)vAud.pause();
+  const au=new Audio("voice/"+(H()?"h":"")+a+b+".mp3");vAud=au;
+  au.play().catch(()=>speak(YOMI[a-1][b-1]));au.onerror=()=>speak(YOMI[a-1][b-1]);}catch(e){speak(YOMI[a-1][b-1])} }
 function speak(txt){ if(!save.sound)return; try{const u=new SpeechSynthesisUtterance(txt);u.lang="ja-JP";u.rate=H()?.75:.9;u.pitch=H()?.3:1;speechSynthesis.cancel();speechSynthesis.speak(u);}catch(e){} }
 function scare(i){ const d=document.createElement("div");d.className="scare";d.innerHTML=chrH(i,"m-happy");document.body.appendChild(d);scream();setTimeout(()=>d.remove(),720) }
 
@@ -560,13 +564,13 @@ function learnMode(d){
     bk.onclick=()=>menu(d);
     prev.onclick=()=>{i=i>1?i-1:9;draw();auto()};
     next.onclick=()=>{i=i<9?i+1:1;draw();auto()};
-    say.onclick=()=>{speak(YOMI[d-1][i-1]);sing(app.querySelector(".buddy .chr"))};
+    say.onclick=()=>{sayKuku(d,i);sing(app.querySelector(".buddy .chr"))};
     hd.onclick=()=>{hide=!hide;draw()};
     cd.onclick=()=>{if(hide){hide=false;draw();auto()}};
     app.querySelectorAll(".pick button").forEach(b=>b.onclick=()=>{i=+b.dataset.k;draw();auto()});
   }
   function sing(el){if(!el)return;setMood(el,"sing");el.classList.add("dance");setTimeout(()=>{el.classList.remove("dance");setMood(el,"idle")},1300)}
-  function auto(){ if(!hide){speak(YOMI[d-1][i-1]);sing(app.querySelector(".buddy .chr"))} }
+  function auto(){ if(!hide){sayKuku(d,i);sing(app.querySelector(".buddy .chr"))} }
   draw();
 }
 
@@ -646,7 +650,7 @@ function quiz(opt){
       if(opt.survival)lives--;
       if(hz){scare(buddy);setMood(bd,"happy")}else{SE.ng();bd.classList.remove("dance");bd.classList.add("sad");setMood(bd,"sad")}
       bb.textContent=left<=0?(hz?"…じかんぎれ…":"じかん ぎれ…"):pick(hz?HOOPS:OOPS);
-      document.getElementById("cd").classList.add("shake");setTimeout(()=>speak(YOMI[a-1][b-1]),hz?700:0);}
+      document.getElementById("cd").classList.add("shake");setTimeout(()=>sayKuku(a,b),hz?700:0);}
     bb.classList.remove("pop");void bb.offsetWidth;bb.classList.add("pop");
     persist();
     const over=opt.survival?lives<=0:idx+1>=qs.length;
@@ -688,5 +692,6 @@ function quiz(opt){
 }
 home();
 </script>
+<div style="text-align:center;font-size:11px;opacity:.5;padding:8px">音声：VOICEVOX:ずんだもん</div>
 </body>
 </html>
